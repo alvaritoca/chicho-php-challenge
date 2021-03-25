@@ -17,13 +17,19 @@ use PHPUnit\Framework\TestCase;
  */
 class MobileTest extends TestCase
 {
+	protected $provider;
+
+	protected function setUp(): void
+	{
+		parent::setUp();
+
+		$this->provider = m::mock(CarrierInterface::class);
+	}
 	
 	/** @test */
 	public function it_returns_null_when_name_empty()
 	{
-		$provider = m::mock(CarrierInterface::class);
-
-		$mobile = new Mobile($provider);
+		$mobile = new Mobile($this->provider);
 
 		$this->assertNull($mobile->makeCallByName(''));
 	}
@@ -37,11 +43,10 @@ class MobileTest extends TestCase
 		$contact->name = "Jose Bejarano";
 		$contact->number = "948562369";
 
-		$provider = m::mock(CarrierInterface::class);
-		$provider->shouldReceive('dialContact')
+		$this->provider->shouldReceive('dialContact')
 			->withArgs([$contact]);
 
-		$provider->shouldReceive('makeCall')
+		$this->provider->shouldReceive('makeCall')
 			->andReturn($call);
 
 		m::mock('alias:'.ContactService::class)
@@ -49,7 +54,7 @@ class MobileTest extends TestCase
 			->withArgs(['Jose Bejarano'])
 			->andReturn($contact);
 		
-		$mobile = new Mobile($provider);
+		$mobile = new Mobile($this->provider);
 
 		$this->assertInstanceOf(Call::class, $mobile->makeCallByName('Jose Bejarano'));
 	}
@@ -58,7 +63,6 @@ class MobileTest extends TestCase
 	public function it_throws_an_exception_when_a_contact_was_not_found()
 	{
 		$call = m::mock('overload:'.Call::class);
-		$provider = m::mock(CarrierInterface::class);
 
 		m::mock('alias:'.ContactService::class)
 			->shouldReceive('findByName')
@@ -67,7 +71,7 @@ class MobileTest extends TestCase
 		
 		$this->expectException(\Exception::class);
 
-		$mobile = new Mobile($provider);
+		$mobile = new Mobile($this->provider);
 		$mobile->makeCallByName('Jose Bejarano');
 	}
 
@@ -75,9 +79,8 @@ class MobileTest extends TestCase
 	public function it_should_send_an_sms_to_the_given_number()
 	{
 		$sms = m::mock('overload:'.SMS::class);
-		$provider = m::mock(CarrierInterface::class);
 
-		$provider->shouldReceive('sendSMS')
+		$this->provider->shouldReceive('sendSMS')
 			->withArgs(['(948)787-6532', 'This is a test message!'])
 			->andReturn($sms);
 
@@ -86,7 +89,7 @@ class MobileTest extends TestCase
 			->withArgs(['(948)787-6532'])
 			->andReturn(true);
 
-		$mobile = new Mobile($provider);
+		$mobile = new Mobile($this->provider);
 
 		$this->assertInstanceOf(SMS::class, $mobile->sendSMS('(948)787-6532', 'This is a test message!'));
 	}
@@ -95,7 +98,6 @@ class MobileTest extends TestCase
 	public function it_throws_an_exception_when_the_number_is_invalid()
 	{
 		$sms = m::mock('overload:'.SMS::class);
-		$provider = m::mock(CarrierInterface::class);
 
 		m::mock('alias:'.ContactService::class)
 			->shouldReceive('validateNumber')
@@ -104,7 +106,7 @@ class MobileTest extends TestCase
 
 		$this->expectException(\InvalidArgumentException::class);
 
-		$mobile = new Mobile($provider);
+		$mobile = new Mobile($this->provider);
 		$mobile->sendSMS('999', 'This is a test message!');
 	}
 
@@ -112,7 +114,6 @@ class MobileTest extends TestCase
 	public function it_throws_an_exception_when_the_arguments_are_missing()
 	{
 		$sms = m::mock('overload:'.SMS::class);
-		$provider = m::mock(CarrierInterface::class);
 
 		m::mock('alias:'.ContactService::class)
 			->shouldReceive('validateNumber')
@@ -121,7 +122,7 @@ class MobileTest extends TestCase
 
 		$this->expectException(\Exception::class);
 
-		$mobile = new Mobile($provider);
+		$mobile = new Mobile($this->provider);
 		$mobile->sendSMS();
 	}
 
