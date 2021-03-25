@@ -8,6 +8,8 @@ use App\Call;
 use App\Contact;
 use App\SMS;
 use App\Services\ContactService;
+use App\Services\Providers\Verizon;
+use App\Services\Providers\TMobile;
 use App\Interfaces\CarrierInterface;
 
 use PHPUnit\Framework\TestCase;
@@ -124,6 +126,60 @@ class MobileTest extends TestCase
 
 		$mobile = new Mobile($this->provider);
 		$mobile->sendSMS();
+	}
+
+	/** @test */
+	public function it_returns_a_call_instance_for_verizon_provider()
+	{
+		$call = m::mock('overload:'.Call::class);
+
+		$contact = m::mock('overload:'.Contact::class);
+		$contact->name = "Jose Bejarano";
+		$contact->number = "948562369";
+		
+		$provider = m::mock('overload:'.Verizon::class, CarrierInterface::class);
+
+		$provider->shouldReceive('dialContact')
+			->withArgs([$contact]);
+
+		$provider->shouldReceive('makeCall')
+			->andReturn($call);
+
+		m::mock('alias:'.ContactService::class)
+			->shouldReceive('findByName')
+			->withArgs(['Jose Bejarano'])
+			->andReturn($contact);
+		
+		$mobile = new Mobile($provider);
+
+		$this->assertInstanceOf(Call::class, $mobile->makeCallByName('Jose Bejarano'));
+	}
+
+	/** @test */
+	public function it_returns_a_call_instance_for_tmobile_provider()
+	{
+		$call = m::mock('overload:'.Call::class);
+
+		$contact = m::mock('overload:'.Contact::class);
+		$contact->name = "Jose Bejarano";
+		$contact->number = "948562369";
+		
+		$provider = m::mock('overload:'.TMobile::class, CarrierInterface::class);
+
+		$provider->shouldReceive('dialContact')
+			->withArgs([$contact]);
+
+		$provider->shouldReceive('makeCall')
+			->andReturn($call);
+
+		m::mock('alias:'.ContactService::class)
+			->shouldReceive('findByName')
+			->withArgs(['Jose Bejarano'])
+			->andReturn($contact);
+		
+		$mobile = new Mobile($provider);
+
+		$this->assertInstanceOf(Call::class, $mobile->makeCallByName('Jose Bejarano'));
 	}
 
 }
