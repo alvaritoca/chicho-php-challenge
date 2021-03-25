@@ -91,4 +91,38 @@ class MobileTest extends TestCase
 		$this->assertInstanceOf(SMS::class, $mobile->sendSMS('(948)787-6532', 'This is a test message!'));
 	}
 
+	/** @test */
+	public function it_throws_an_exception_when_the_number_is_invalid()
+	{
+		$sms = m::mock('overload:'.SMS::class);
+		$provider = m::mock(CarrierInterface::class);
+
+		m::mock('alias:'.ContactService::class)
+			->shouldReceive('validateNumber')
+			->withArgs(['999'])
+			->andReturn(false);
+
+		$this->expectException(\InvalidArgumentException::class);
+
+		$mobile = new Mobile($provider);
+		$mobile->sendSMS('999', 'This is a test message!');
+	}
+
+	/** @test */
+	public function it_throws_an_exception_when_the_arguments_are_missing()
+	{
+		$sms = m::mock('overload:'.SMS::class);
+		$provider = m::mock(CarrierInterface::class);
+
+		m::mock('alias:'.ContactService::class)
+			->shouldReceive('validateNumber')
+			->withArgs(['999'])
+			->andReturn(false);
+
+		$this->expectException(\Exception::class);
+
+		$mobile = new Mobile($provider);
+		$mobile->sendSMS();
+	}
+
 }
