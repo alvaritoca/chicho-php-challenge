@@ -32,5 +32,20 @@ class Mobile
 		return $this->provider->makeCall();
 	}
 
+	public function sendSMS($number = null, $body = null)
+	{
+		if( !isset($number) || !isset($body) ) {
+			throw new \Exception("A phone number and the message body are required to send an SMS.");
+		}
+
+		$isValidNumber = ContactService::validateNumber($number);
+
+		if (!$isValidNumber) {
+			throw new \InvalidArgumentException("The phone number is invalid.");
+		}
+
+		return $this->provider->sendSMS($number, $body);
+	}
+
 
 }
