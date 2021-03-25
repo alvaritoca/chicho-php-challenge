@@ -23,6 +23,10 @@ class Mobile
 
 		$contact = ContactService::findByName($name);
 
+		if(!isset($contact)) {
+			throw new \Exception("No contact was found for the given name.");
+		}
+
 		$this->provider->dialContact($contact);
 
 		return $this->provider->makeCall();
