@@ -6,11 +6,15 @@ use Mockery as m;
 use App\Mobile;
 use App\Call;
 use App\Contact;
+use App\SMS;
 use App\Services\ContactService;
 use App\Interfaces\CarrierInterface;
 
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @runTestsInSeparateProcesses
+ */
 class MobileTest extends TestCase
 {
 	
@@ -28,16 +32,17 @@ class MobileTest extends TestCase
 	public function it_returns_a_call_instance_when_calling_by_name()
 	{
 		$call = m::mock('overload:'.Call::class);
+
 		$contact = m::mock('overload:'.Contact::class);
 		$contact->name = "Jose Bejarano";
 		$contact->number = "948562369";
 
 		$provider = m::mock(CarrierInterface::class);
 		$provider->shouldReceive('dialContact')
-				->withArgs([$contact]);
+			->withArgs([$contact]);
 
 		$provider->shouldReceive('makeCall')
-				->andReturn($call);
+			->andReturn($call);
 
 		m::mock('alias:'.ContactService::class)
 			->shouldReceive('findByName')
@@ -64,6 +69,26 @@ class MobileTest extends TestCase
 
 		$mobile = new Mobile($provider);
 		$mobile->makeCallByName('Jose Bejarano');
+	}
+
+	/** @test */
+	public function it_should_send_an_sms_to_the_given_number()
+	{
+		$sms = m::mock('overload:'.SMS::class);
+		$provider = m::mock(CarrierInterface::class);
+
+		$provider->shouldReceive('sendSMS')
+			->withArgs(['(948)787-6532', 'This is a test message!'])
+			->andReturn($sms);
+
+		m::mock('alias:'.ContactService::class)
+			->shouldReceive('validateNumber')
+			->withArgs(['(948)787-6532'])
+			->andReturn(true);
+
+		$mobile = new Mobile($provider);
+
+		$this->assertInstanceOf(SMS::class, $mobile->sendSMS('(948)787-6532', 'This is a test message!'));
 	}
 
 }
