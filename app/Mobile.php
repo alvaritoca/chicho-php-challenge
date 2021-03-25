@@ -4,6 +4,7 @@ namespace App;
 
 use App\Interfaces\CarrierInterface;
 use App\Services\ContactService;
+use App\Services\TwilioService;
 
 
 class Mobile
@@ -32,7 +33,7 @@ class Mobile
 		return $this->provider->makeCall();
 	}
 
-	public function sendSMS($number = null, $body = null)
+	public function sendSMS($number = null, $body = null, $twilio = false)
 	{
 		if( !isset($number) || !isset($body) ) {
 			throw new \Exception("A phone number and the message body are required to send an SMS.");
@@ -42,6 +43,10 @@ class Mobile
 
 		if (!$isValidNumber) {
 			throw new \InvalidArgumentException("The phone number is invalid.");
+		}
+
+		if ($twilio) {
+			return TwilioService::sendAndTrackSMS($number, $body);
 		}
 
 		return $this->provider->sendSMS($number, $body);
